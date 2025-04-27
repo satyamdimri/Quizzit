@@ -1,7 +1,7 @@
-// --- THREE.JS BACKGROUND WITH PARALLAX START ---
+// --- THREE.JS BACKGROUND: STARS + GALAXIES ---
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.module.js';
 
-let scene, camera, renderer, stars = [];
+let scene, camera, renderer, stars = [], galaxies = [];
 let mouseX = 0, mouseY = 0;
 let targetX = 0, targetY = 0;
 const windowHalfX = window.innerWidth / 2;
@@ -28,20 +28,38 @@ function initBackground() {
     renderer.domElement.style.zIndex = '-1';
 
     addStars();
+    addGalaxies();
     animateBackground();
 }
 
 function addStars() {
-    const geometry = new THREE.SphereGeometry(0.05, 24, 24);
+    const geometry = new THREE.SphereGeometry(0.04, 24, 24); // Smaller stars
     const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
 
-    for (let i = 0; i < 500; i++) {
+    for (let i = 0; i < 1500; i++) { // 🔥 Increased from 500 to 1500
         const star = new THREE.Mesh(geometry, material);
-        star.position.x = THREE.MathUtils.randFloatSpread(50);
-        star.position.y = THREE.MathUtils.randFloatSpread(50);
-        star.position.z = THREE.MathUtils.randFloatSpread(50);
+        star.position.x = THREE.MathUtils.randFloatSpread(100); // 🔥 Spread stars wider
+        star.position.y = THREE.MathUtils.randFloatSpread(100);
+        star.position.z = THREE.MathUtils.randFloatSpread(100);
         scene.add(star);
         stars.push(star);
+    }
+}
+
+
+function addGalaxies() {
+    const galaxyGeometry = new THREE.TorusGeometry(2, 0.2, 16, 100);
+    const galaxyMaterial = new THREE.MeshBasicMaterial({ color: 0x8888ff, wireframe: true });
+
+    for (let i = 0; i < 3; i++) {
+        const galaxy = new THREE.Mesh(galaxyGeometry, galaxyMaterial);
+        galaxy.position.x = THREE.MathUtils.randFloatSpread(30);
+        galaxy.position.y = THREE.MathUtils.randFloatSpread(30);
+        galaxy.position.z = THREE.MathUtils.randFloatSpread(30);
+        galaxy.rotation.x = Math.random() * Math.PI;
+        galaxy.rotation.y = Math.random() * Math.PI;
+        scene.add(galaxy);
+        galaxies.push(galaxy);
     }
 }
 
@@ -51,16 +69,26 @@ function animateBackground() {
     targetX = (mouseX - windowHalfX) * 0.001;
     targetY = (mouseY - windowHalfY) * 0.001;
 
-    camera.rotation.y += 0.05 * (targetX - camera.rotation.y);
-    camera.rotation.x += 0.05 * (targetY - camera.rotation.x);
+    camera.rotation.y += 0.02 * (targetX - camera.rotation.y);
+    camera.rotation.x += 0.02 * (targetY - camera.rotation.x);
 
     stars.forEach(star => {
         star.rotation.x += 0.001;
         star.rotation.y += 0.001;
+
+        // ✨ Twinkle effect: randomly change star visibility
+        star.material.opacity = 0.5 + Math.sin(Date.now() * 0.002 + star.position.x) * 0.5;
+        star.material.transparent = true;
+    });
+
+    galaxies.forEach(galaxy => {
+        galaxy.rotation.x += 0.0015;
+        galaxy.rotation.y += 0.0025;
     });
 
     renderer.render(scene, camera);
 }
+
 
 // Track mouse movement
 document.addEventListener('mousemove', (event) => {
@@ -77,7 +105,8 @@ window.addEventListener('resize', () => {
 });
 
 initBackground();
-// --- THREE.JS BACKGROUND WITH PARALLAX END ---
+// --- THREE.JS BACKGROUND: STARS + GALAXIES END ---
+
 
 
 const API_BASE = "http://localhost:8000"; // Change if backend running on another port
