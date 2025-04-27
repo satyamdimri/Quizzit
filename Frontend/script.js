@@ -252,12 +252,34 @@ uploadBtn.addEventListener("click", async () => {
 checkAnswersBtn.addEventListener("click", () => {
     const results = quizData.map((q, index) => {
         const selected = document.querySelector(`input[name="question-${index}"]:checked`);
-        return selected && selected.value === q.correctAnswer;
+        const options = document.getElementsByName(`question-${index}`);
+
+        options.forEach(option => {
+            option.parentElement.style.color = "inherit"; // reset color
+        });
+
+        if (selected) {
+            if (selected.value === q.correctAnswer) {
+                selected.parentElement.style.color = "green"; // ✅ correct - green
+                return true;
+            } else {
+                selected.parentElement.style.color = "red";   // ❌ incorrect - red
+                // Optional: also highlight correct option in green
+                options.forEach(opt => {
+                    if (opt.value === q.correctAnswer) {
+                        opt.parentElement.style.color = "green";
+                    }
+                });
+                return false;
+            }
+        }
+        return false;
     });
 
     const correct = results.filter(r => r).length;
     document.getElementById("result").innerText = `You got ${correct}/${quizData.length} correct!`;
 });
+
 
 newQuizBtn.addEventListener("click", resetQuiz);
 
@@ -265,4 +287,42 @@ downloadQuizBtn.addEventListener("click", () => {
     if (downloadUrl) {
         window.open(`${API_BASE}${downloadUrl}`, "_blank");
     }
+});
+// --- WELCOME SCREEN FADEOUT ---
+window.addEventListener('load', () => {
+    const welcome = document.getElementById('welcome-screen');
+    setTimeout(() => {
+        welcome.classList.add('fade-out');
+    }, 2500); // Show for 2.5 seconds
+});
+// --- BETTER WELCOME SCREEN ANIMATION ---
+window.addEventListener('load', () => {
+    const welcome = document.getElementById('welcome-screen');
+
+    // Start fade-in automatically
+    setTimeout(() => {
+        welcome.classList.add('active');
+    }, 100); // slight delay after page load
+
+    // Fade-out after showing
+    setTimeout(() => {
+        welcome.classList.add('fade-out');
+    }, 4000); // show for about 4 seconds total
+});
+window.addEventListener('load', () => {
+    const welcome = document.getElementById('welcome-screen');
+    const mainContent = document.getElementById('main-content');
+
+    setTimeout(() => {
+        welcome.classList.add('active');
+    }, 100);
+
+    setTimeout(() => {
+        welcome.classList.add('fade-out');
+
+        // 🌟 Reveal main website after welcome animation
+        setTimeout(() => {
+            mainContent.style.display = "block";
+        }, 2000); // after fade-out finishes
+    }, 4000);
 });
