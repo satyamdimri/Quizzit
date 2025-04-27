@@ -1,3 +1,68 @@
+// --- THREE.JS BACKGROUND START ---
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.module.js';
+
+let scene, camera, renderer, stars = [];
+
+function initBackground() {
+    scene = new THREE.Scene();
+    
+    camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+    );
+    camera.position.z = 5;
+
+    renderer = new THREE.WebGLRenderer({ alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    renderer.domElement.style.position = 'fixed';
+    renderer.domElement.style.top = '0';
+    renderer.domElement.style.left = '0';
+    renderer.domElement.style.zIndex = '-1';
+
+    addStars();
+    animateBackground();
+}
+
+function addStars() {
+    const geometry = new THREE.SphereGeometry(0.05, 24, 24);
+    const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+    for (let i = 0; i < 500; i++) {
+        const star = new THREE.Mesh(geometry, material);
+        star.position.x = THREE.MathUtils.randFloatSpread(50);
+        star.position.y = THREE.MathUtils.randFloatSpread(50);
+        star.position.z = THREE.MathUtils.randFloatSpread(50);
+        scene.add(star);
+        stars.push(star);
+    }
+}
+
+function animateBackground() {
+    requestAnimationFrame(animateBackground);
+
+    stars.forEach(star => {
+        star.rotation.x += 0.001;
+        star.rotation.y += 0.001;
+    });
+
+    renderer.render(scene, camera);
+}
+
+window.addEventListener('resize', () => {
+    if (camera && renderer) {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+});
+
+initBackground();
+// --- THREE.JS BACKGROUND END ---
+
 const API_BASE = "http://localhost:8000"; // Change if backend running on another port
 
 // DOM Elements
