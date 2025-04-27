@@ -1,185 +1,157 @@
-// Configuration
-const API_URL = 'http://localhost:8000';
+const API_BASE = "http://localhost:8000"; // Change if backend running on another port
 
-// DOM elements
-const generateBtn = document.getElementById('generate-btn');
-const loading = document.getElementById('loading');
-const quizContainer = document.getElementById('quiz-container');
-const questionsContainer = document.getElementById('questions-container');
-const checkAnswersBtn = document.getElementById('check-answers-btn');
-const newQuizBtn = document.getElementById('new-quiz-btn');
-const resultDisplay = document.getElementById('result');
-const errorMessage = document.getElementById('error-message');
+// DOM Elements
+const generateBtn = document.getElementById("generate-btn");
+const uploadBtn = document.getElementById("upload-btn");
+const checkAnswersBtn = document.getElementById("check-answers-btn");
+const newQuizBtn = document.getElementById("new-quiz-btn");
+const downloadQuizBtn = document.getElementById("download-quiz-btn");
 
-// Current quiz data
-let currentQuiz = [];
+const loading = document.getElementById("loading");
+const errorMessage = document.getElementById("error-message");
+const quizContainer = document.getElementById("quiz-container");
+const questionsContainer = document.getElementById("questions-container");
+const formContainer = document.querySelector(".form-container");
+const container = document.querySelector(".container");
 
-// Event listeners
-generateBtn.addEventListener('click', generateQuiz);
-checkAnswersBtn.addEventListener('click', checkAnswers);
-newQuizBtn.addEventListener('click', resetQuiz);
+let quizData = [];
+let downloadUrl = "";
 
-/**
- * Generates a quiz by fetching questions from the API
- */
-async function generateQuiz() {
-    const topic = document.getElementById('topic').value.trim();
-    const numQuestions = document.getElementById('num-questions').value;
-    const difficulty = document.getElementById('difficulty').value;
-    
+// Utility Functions
+function showLoading(show) {
+    loading.style.display = show ? "block" : "none";
+}
+
+function showError(msg) {
+    errorMessage.innerText = msg;
+    errorMessage.style.display = msg ? "block" : "none";
+}
+
+function resetQuiz() {
+    quizContainer.style.display = "none";
+    questionsContainer.innerHTML = "";
+    document.getElementById("result").innerText = "";
+    document.getElementById("file-upload").value = "";
+    downloadQuizBtn.style.display = "none";
+
+    // Slide back to the form
+    formContainer.style.display = "block";
+    quizContainer.style.display = "none";
+}
+
+function displayQuiz(questions) {
+    questionsContainer.innerHTML = "";
+
+    questions.forEach((q, index) => {
+        const qDiv = document.createElement("div");
+        qDiv.className = "question-block";
+        qDiv.innerHTML = `
+            <p><strong>Q${index + 1}:</strong> ${q.question}</p>
+            ${q.options.map(opt => `
+                <label>
+                    <input type="radio" name="question-${index}" value="${opt.id}"> ${opt.id}. ${opt.text}
+                </label>
+            `).join("")}
+        `;
+        questionsContainer.appendChild(qDiv);
+    });
+
+    // Slide to the quiz section
+    formContainer.style.display = "none";
+    quizContainer.style.display = "block";
+}
+
+async function fetchQuizData(endpoint, options) {
+    try {
+        const res = await fetch(endpoint, options);
+        if (!res.ok) throw new Error("Failed to fetch quiz data!");
+        return await res.json();
+    } catch (err) {
+        throw new Error(err.message || "An error occurred while fetching quiz data.");
+    }
+}
+
+// Event Listeners
+generateBtn.addEventListener("click", async () => {
+    const topic = document.getElementById("topic").value.trim();
+    const numQuestions = parseInt(document.getElementById("num-questions").value);
+    const difficulty = document.getElementById("difficulty").value;
+
     if (!topic) {
-        showError('Please enter a topic');
+        showError("Please enter a topic!");
         return;
     }
-    
-    // Show loading, hide other sections
-    loading.style.display = 'block';
-    quizContainer.style.display = 'none';
-    errorMessage.style.display = 'none';
-    
+
+    showLoading(true);
+    showError("");
+
     try {
-        const response = await fetch(`${API_URL}/generate_quiz`, {
-            method: 'POST',
+        const data = await fetchQuizData(`${API_BASE}/generate_quiz`, {
+            method: "POST",
             headers: {
-                'Content-Type': 'application/json'
+                "Content-Type": "application/json"
             },
-            body: JSON.stringify({
-                topic: topic,
-                num_questions: parseInt(numQuestions),
-                difficulty: difficulty
-            })
+            body: JSON.stringify({ topic, num_questions: numQuestions, difficulty })
         });
-        
-        if (!response.ok) {
-            throw new Error('Failed to generate quiz');
-        }
-        
-        const data = await response.json();
-        currentQuiz = data.questions;
-        
-        if (currentQuiz.length === 0) {
-            showError('No questions were generated. Please try a different topic.');
-            loading.style.display = 'none';
-            return;
-        }
-        
-        renderQuiz(currentQuiz);
-        
-        // Hide loading, show quiz
-        loading.style.display = 'none';
-        quizContainer.style.display = 'block';
-        
-    } catch (error) {
-        console.error('Error:', error);
-        showError('Error generating quiz. Please try again.');
-        loading.style.display = 'none';
+
+        quizData = data.questions;
+        displayQuiz(quizData);
+        downloadQuizBtn.style.display = "none"; // No file to download here
+    } catch (err) {
+        showError(err.message);
+    } finally {
+        showLoading(false);
     }
-}
+});
 
-/**
- * Renders the quiz questions in the DOM
- * @param {Array} questions - Array of question objects
- */
-function renderQuiz(questions) {
-    questionsContainer.innerHTML = '';
-    resultDisplay.style.display = 'none';
-    
-    questions.forEach((q, index) => {
-        const questionDiv = document.createElement('div');
-        questionDiv.className = 'question';
-        questionDiv.innerHTML = `
-            <h3>Question ${index + 1}: ${q.question}</h3>
-            <ul class="options" data-question="${index}">
-                ${q.options.map(option => `
-                    <li class="option" data-option="${option.id}">
-                        ${option.id}. ${option.text}
-                    </li>
-                `).join('')}
-            </ul>
-        `;
-        
-        questionsContainer.appendChild(questionDiv);
-    });
-    
-    // Add click handlers for options
-    document.querySelectorAll('.option').forEach(option => {
-        option.addEventListener('click', function() {
-            const questionIndex = this.parentElement.dataset.question;
-            
-            // Deselect all options in this question
-            document.querySelectorAll(`.options[data-question="${questionIndex}"] .option`).forEach(opt => {
-                opt.classList.remove('selected');
-            });
-            
-            // Select this option
-            this.classList.add('selected');
+uploadBtn.addEventListener("click", async () => {
+    const fileInput = document.getElementById("file-upload");
+    if (!fileInput.files.length) {
+        showError("Please upload a file first!");
+        return;
+    }
+
+    const file = fileInput.files[0];
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("num_questions", document.getElementById("num-questions").value);
+    formData.append("difficulty", document.getElementById("difficulty").value);
+
+    showLoading(true);
+    showError("");
+
+    try {
+        const data = await fetchQuizData(`${API_BASE}/upload_and_generate_quiz`, {
+            method: "POST",
+            body: formData
         });
+
+        quizData = data.questions;
+        downloadUrl = data.download_url;
+
+        displayQuiz(quizData);
+        downloadQuizBtn.style.display = "inline-block";
+    } catch (err) {
+        showError(err.message);
+    } finally {
+        showLoading(false);
+    }
+});
+
+checkAnswersBtn.addEventListener("click", () => {
+    const results = quizData.map((q, index) => {
+        const selected = document.querySelector(`input[name="question-${index}"]:checked`);
+        return selected && selected.value === q.correctAnswer;
     });
-}
 
-/**
- * Checks the user's answers and displays the score
- */
-function checkAnswers() {
-    let correct = 0;
-    let unanswered = 0;
-    
-    currentQuiz.forEach((q, index) => {
-        const selectedOption = document.querySelector(`.options[data-question="${index}"] .option.selected`);
-        
-        if (!selectedOption) {
-            unanswered++;
-            return;
-        }
-        
-        const userAnswer = selectedOption.dataset.option;
-        
-        // Mark correct and incorrect answers
-        document.querySelectorAll(`.options[data-question="${index}"] .option`).forEach(option => {
-            const optionId = option.dataset.option;
-            
-            if (optionId === q.correctAnswer) {
-                option.classList.add('correct');
-            } else if (option.classList.contains('selected')) {
-                option.classList.add('incorrect');
-            }
-        });
-        
-        if (userAnswer === q.correctAnswer) {
-            correct++;
-        }
-    });
-    
-    // Show result
-    const score = correct;
-    const total = currentQuiz.length;
-    const percentage = Math.round((score / total) * 100);
-    
-    resultDisplay.innerHTML = unanswered > 0 ? 
-        `You have ${unanswered} unanswered question${unanswered > 1 ? 's' : ''}!` :
-        `Your score: ${score}/${total} (${percentage}%)`;
-        
-    resultDisplay.style.backgroundColor = percentage >= 70 ? '#d4edda' : percentage >= 40 ? '#fff3cd' : '#f8d7da';
-    resultDisplay.style.display = 'block';
-    
-    // Disable checking again
-    checkAnswersBtn.disabled = true;
-}
+    const correct = results.filter(r => r).length;
+    document.getElementById("result").innerText = `You got ${correct}/${quizData.length} correct!`;
+});
 
-/**
- * Resets the quiz form and UI
- */
-function resetQuiz() {
-    quizContainer.style.display = 'none';
-    document.getElementById('topic').value = '';
-    checkAnswersBtn.disabled = false;
-}
+newQuizBtn.addEventListener("click", resetQuiz);
 
-/**
- * Shows an error message
- * @param {string} message - Error message to display
- */
-function showError(message) {
-    errorMessage.textContent = message;
-    errorMessage.style.display = 'block';
-}
+downloadQuizBtn.addEventListener("click", () => {
+    if (downloadUrl) {
+        window.open(`${API_BASE}${downloadUrl}`, "_blank");
+    }
+});
