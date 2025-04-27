@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Generator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Quizit</h1>
+        
+        <div class="form-container">
+            <div class="form-group">
+                <label for="topic">Topic</label>
+                <input type="text" id="topic" placeholder="Enter a topic (e.g., JavaScript, World History, Space)">
+            </div>
+            
+            <div class="form-group">
+                <label for="num-questions">Number of Questions</label>
+                <input type="number" id="num-questions" min="1" max="10" value="5">
+            </div>
+            
+            <div class="form-group">
+                <label for="difficulty">Difficulty Level</label>
+                <select id="difficulty">
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
+            
+            <button id="generate-btn">Generate Quiz</button>
+        </div>
+        
+        <div class="loading" id="loading">
+            <p>Generating your quiz, please wait...</p>
+        </div>
+        
+        <div class="error-message" id="error-message"></div>
+        
+        <div class="quiz-container" id="quiz-container">
+            <div id="questions-container"></div>
+            
+            <div class="result" id="result"></div>
+            
+            <div class="actions">
+                <button id="check-answers-btn">Check Answers</button>
+                <button id="new-quiz-btn">New Quiz</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
