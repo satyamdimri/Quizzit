@@ -1,7 +1,11 @@
-// --- THREE.JS BACKGROUND START ---
+// --- THREE.JS BACKGROUND WITH PARALLAX START ---
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.module.js';
 
 let scene, camera, renderer, stars = [];
+let mouseX = 0, mouseY = 0;
+let targetX = 0, targetY = 0;
+const windowHalfX = window.innerWidth / 2;
+const windowHalfY = window.innerHeight / 2;
 
 function initBackground() {
     scene = new THREE.Scene();
@@ -44,6 +48,12 @@ function addStars() {
 function animateBackground() {
     requestAnimationFrame(animateBackground);
 
+    targetX = (mouseX - windowHalfX) * 0.001;
+    targetY = (mouseY - windowHalfY) * 0.001;
+
+    camera.rotation.y += 0.05 * (targetX - camera.rotation.y);
+    camera.rotation.x += 0.05 * (targetY - camera.rotation.x);
+
     stars.forEach(star => {
         star.rotation.x += 0.001;
         star.rotation.y += 0.001;
@@ -51,6 +61,12 @@ function animateBackground() {
 
     renderer.render(scene, camera);
 }
+
+// Track mouse movement
+document.addEventListener('mousemove', (event) => {
+    mouseX = event.clientX;
+    mouseY = event.clientY;
+});
 
 window.addEventListener('resize', () => {
     if (camera && renderer) {
@@ -61,7 +77,8 @@ window.addEventListener('resize', () => {
 });
 
 initBackground();
-// --- THREE.JS BACKGROUND END ---
+// --- THREE.JS BACKGROUND WITH PARALLAX END ---
+
 
 const API_BASE = "http://localhost:8000"; // Change if backend running on another port
 
