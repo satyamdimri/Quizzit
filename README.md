@@ -1,3 +1,5 @@
 # Quizzit
-## Quiz website - generates quizes using ai 
-### Can genrate quizes using uploaded pdf,word or any other type files or any topic
+## Quiz website - generates quizzes using ai 
+### Can generate quizzes using uploaded pdf,word or any other type files or any topic
+### Frontend - HTML, CSS, JavaScript
+### Backend - Python, Fast API, Gemini
